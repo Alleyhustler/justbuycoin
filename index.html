@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JustBuyCoin</title>
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --terminal: #111;
+            --text: #e0e0e0;
+            --border: #333;
+            --primary: #fff;
+            --accent: #666;
+            --button-bg: #222;
+            --button-hover: #2a2a2a;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'IBM Plex Mono', monospace;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-img {
+            height: 40px; /* Scaled down from 100px for better proportion */
+            width: auto;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.85rem;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .status-label {
+            color: var(--accent);
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .terminal-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+            border-right: 1px solid var(--border);
+        }
+
+        .terminal-output {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border);
+            font-family: 'IBM Plex Mono', monospace;
+            line-height: 1.5;
+            background: var(--terminal);
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .action-btn {
+            background: var(--button-bg);
+            color: var(--primary);
+            border: 1px solid var(--border);
+            padding: 0.8rem;
+            font-family: 'IBM Plex Mono', monospace;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .action-btn:hover {
+            background: var(--button-hover);
+        }
+
+        .action-btn.max {
+            grid-column: span 3;
+        }
+
+        .side-panel {
+            width: 250px;
+            padding: 1rem;
+            border-left: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+
+        .degen-status {
+            margin-bottom: 1.5rem;
+        }
+
+        .xp-bar {
+            height: 4px;
+            background: var(--border);
+            margin-top: 0.5rem;
+        }
+
+        .xp-progress {
+            height: 100%;
+            background: var(--primary);
+            width: 30%;
+        }
+
+        .response-line {
+            margin: 0.5rem 0;
+        }
+
+        .response-line.system {
+            color: var(--accent);
+        }
+
+        .response-line.success {
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo-container">
+            <img src="image.png" alt="JustBuyCoin" class="logo-img">
+                    <p>Twitter = https://x.com/_Justbuycoin</p>
+
+        </div>
+        <div class="status-bar">
+            <div class="status-item">
+                <span class="status-label">PRICE:</span>
+                <span>$0.0042</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">BALANCE:</span>
+                <span id="user-balance">0 JUSTBUY</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="main-container">
+        <div class="terminal-container">
+            <div class="terminal-output" id="terminal-output">
+                <div class="response-line system">> Terminal initialized.</div>
+                <div class="response-line system">> Type or use quick actions.</div>
+            </div>
+            
+            <div class="quick-actions">
+                <button class="action-btn" onclick="executeBuy(10)">JUSTBUY $10</button>
+                <button class="action-btn" onclick="executeBuy(50)">JUSTBUY $50</button>
+                <button class="action-btn" onclick="executeBuy(100)">JUSTBUY $100</button>
+                <button class="action-btn" onclick="executeBuy(500)">JUSTBUY $500</button>
+                <button class="action-btn max" onclick="executeBuy('MAX')">JUSTBUY $MAX</button>
+            </div>
+        </div>
+        
+        <div class="side-panel">
+            <div class="degen-status">
+                <div>DEGEN LEVEL: <span id="degen-level">0</span></div>
+                <div class="xp-bar">
+                    <div class="xp-progress" id="xp-bar"></div>
+                </div>
+            </div>
+            <div>
+                <div class="response-line">UNLOCKS:</div>
+                <div class="response-line system">- Level 1: Basic Degen</div>
+                <div class="response-line system">- Level 5: Ape Mode</div>
+                <div class="response-line system">- Level 10: Diamond Clown</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let xp = 0;
+        let level = 0;
+        let JUSTBUYBalance = 0;
+        const xpPerLevel = [0, 100, 300, 600, 1000, 1500, 2100, 2800, 3600, 4500, 5500];
+        
+        // Voice lines (toned down)
+        const voiceLines = [
+            "Executed. No thoughts, just buy.",
+            "Market analysis: irrelevant.",
+            "Degen level increasing.",
+            "Another buy. System approves.",
+        ];
+        
+        // DOM elements
+        const terminalOutput = document.getElementById('terminal-output');
+        const xpBar = document.getElementById('xp-bar');
+        const degenLevel = document.getElementById('degen-level');
+        const userBalance = document.getElementById('user-balance');
+        
+        // Initialize
+        updateXpBar();
+        
+        // Functions
+        function executeBuy(amount) {
+            let buyAmount;
+            
+            if (amount === 'MAX') {
+                buyAmount = Math.floor(Math.random() * 1000) + 500;
+                addToTerminal(`> JUSTBUY $MAX ($${buyAmount})`, 'system');
+            } else {
+                buyAmount = parseInt(amount) || 10;
+                addToTerminal(`> JUSTBUY $${buyAmount}`, 'system');
+            }
+            
+            setTimeout(() => {
+                const voiceLine = voiceLines[Math.floor(Math.random() * voiceLines.length)];
+                const JUSTBUYPurchased = (buyAmount / 0.0042).toFixed(0);
+                
+                addToTerminal(`✓ ${JUSTBUYPurchased} JUSTBUY acquired`, 'success');
+                addToTerminal(voiceLine);
+                
+                JUSTBUYBalance += parseInt(JUSTBUYPurchased);
+                userBalance.textContent = `${JUSTBUYBalance} JUSTBUY`;
+                addXp(buyAmount);
+                
+                terminalOutput.scrollTop = terminalOutput.scrollHeight;
+            }, 800);
+        }
+        
+        function addXp(amount) {
+            xp += amount;
+            const newLevel = calculateLevel();
+            if (newLevel > level) {
+                level = newLevel;
+                degenLevel.textContent = level;
+                addToTerminal(`▲ DEGEN LEVEL: ${level}`, 'success');
+            }
+            updateXpBar();
+        }
+        
+        function calculateLevel() {
+            for (let i = xpPerLevel.length - 1; i >= 0; i--) {
+                if (xp >= xpPerLevel[i]) return i;
+            }
+            return 0;
+        }
+        
+        function updateXpBar() {
+            const currentLevel = calculateLevel();
+            const nextLevelXp = xpPerLevel[currentLevel + 1] || xpPerLevel[currentLevel] * 1.5;
+            const currentLevelXp = xpPerLevel[currentLevel] || 0;
+            const progress = ((xp - currentLevelXp) / (nextLevelXp - currentLevelXp)) * 100;
+            xpBar.style.width = `${Math.min(100, progress)}%`;
+        }
+        
+        function addToTerminal(text, type = '') {
+            const line = document.createElement('div');
+            line.className = `response-line ${type}`;
+            line.textContent = text;
+            terminalOutput.appendChild(line);
+        }
+    </script>
+</body>
+</html>
